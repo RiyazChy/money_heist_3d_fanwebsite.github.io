@@ -1,0 +1,140 @@
+index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Airtel Public Report | Final Dashboard</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+<style>
+body{font-family:Poppins;background:#0b0b0b;color:#fff;margin:0}
+.header{text-align:center;padding:30px;background:#000}
+.container{max-width:1100px;margin:auto;padding:20px}
+.card{background:#151515;padding:20px;margin:20px 0;border-radius:12px}
+h2{color:#ff3b3b}
+button,input{padding:10px;margin-top:10px;width:100%;border:none;border-radius:6px}
+button{background:#ff3b3b;color:#fff}
+.counter{font-size:2rem;color:#ff3b3b}
+canvas{background:#111;border-radius:10px}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+<h1>#AirtelRealityCheck FINAL</h1>
+<p>Public Evidence Dashboard | Silchar</p>
+</div>
+
+<div class="container">
+
+<div class="card">
+<h2>Total Complaints</h2>
+<div class="counter" id="count">0</div>
+</div>
+
+<div class="card">
+<h2>Average Speed</h2>
+<div class="counter" id="avg">0 Mbps</div>
+</div>
+
+<div class="card">
+<h2>Speed Trend</h2>
+<canvas id="chart" width="800" height="200"></canvas>
+</div>
+
+<div class="card">
+<h2>Submit Report</h2>
+<input type="number" id="speed" placeholder="Speed Mbps">
+<input type="text" id="area" placeholder="Area">
+<button onclick="submitData()">Submit</button>
+</div>
+
+<div class="card">
+<h2>Download Legal Report</h2>
+<button onclick="generatePDF()">Download PDF</button>
+</div>
+
+</div>
+
+<script>
+// 🔑 PUT YOUR FIREBASE CONFIG HERE
+const firebaseConfig = {
+ apiKey:"YOUR_API_KEY",
+ authDomain:"YOUR_PROJECT.firebaseapp.com",
+ databaseURL:"https://YOUR_PROJECT.firebaseio.com",
+ projectId:"YOUR_PROJECT"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let speeds = [];
+
+function submitData(){
+ let speed = parseFloat(document.getElementById('speed').value);
+ let area = document.getElementById('area').value || "Unknown";
+ if(!speed) return;
+
+ db.ref('reports').push({
+   speed: speed,
+   area: area,
+   time: Date.now()
+ });
+}
+
+function draw(){
+ let c = document.getElementById('chart');
+ let ctx = c.getContext('2d');
+ ctx.clearRect(0,0,c.width,c.height);
+
+ let w = c.width / speeds.length;
+ speeds.forEach((v,i)=>{
+   ctx.fillRect(i*w, c.height - v*5, w-2, v*5);
+ });
+}
+
+function generatePDF(){
+ const { jsPDF } = window.jspdf;
+ let doc = new jsPDF();
+
+ let avg = document.getElementById('avg').innerText;
+ let count = document.getElementById('count').innerText;
+
+ doc.text("Airtel Service Report - Silchar", 10, 10);
+ doc.text("Total Complaints: " + count, 10, 20);
+ doc.text("Average Speed: " + avg, 10, 30);
+ doc.text("Issue: Consistent degradation below promised speed.", 10, 40);
+
+ doc.save("Airtel_Report.pdf");
+}
+
+// 🔄 REAL-TIME LISTENER
+db.ref('reports').on('value', snap=>{
+ speeds = [];
+ let total = 0, count = 0;
+
+ snap.forEach(c=>{
+   let v = c.val().speed;
+   speeds.push(v);
+   total += v;
+   count++;
+ });
+
+ document.getElementById('count').innerText = count;
+
+ let avg = count ? (total/count).toFixed(2) : 0;
+ document.getElementById('avg').innerText = avg + " Mbps";
+
+ draw();
+});
+</script>
+
+</body>
+</html>
