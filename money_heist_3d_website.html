@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Money Heist - 3D Experience</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        #canvas {
+            display: block;
+            width: 100%;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 1rem;
+            z-index: 1000;
+            border-bottom: 2px solid #d32f2f;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        nav a:hover {
+            color: #d32f2f;
+            transform: scale(1.1);
+        }
+
+        /* Content Container */
+        .content {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 500;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .section {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 100px 20px;
+            pointer-events: auto;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .section.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-content {
+            max-width: 1200px;
+            width: 100%;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 3D Cards */
+        .cards-3d {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            perspective: 1000px;
+        }
+
+        .card-3d {
+            background: linear-gradient(135deg, rgba(211, 47, 47, 0.2), rgba(0, 0, 0, 0.5));
+            border: 2px solid #d32f2f;
+            padding: 2rem;
+            border-radius: 12px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-3d::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .card-3d:hover {
+            transform: rotateX(10deg) rotateY(-10deg) scale(1.05);
+            box-shadow: 0 20px 40px rgba(211, 47, 47, 0.4);
+            border-color: #ff6b6b;
+        }
+
+        .card-3d h3 {
+            color: #d32f2f;
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-3d .actor {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-3d p {
+            color: #ddd;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Hero Text */
+        .hero-text {
+            text-align: center;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .hero-text h1 {
+            font-size: 4rem;
+            color: #d32f2f;
+            text-shadow: 0 0 20px rgba(211, 47, 47, 0.8), 0 0 40px rgba(211, 47, 47, 0.4);
+            margin-bottom: 1rem;
+        }
+
+        .hero-text p {
+            font-size: 1.5rem;
+            color: #aaa;
+            margin-bottom: 0.5rem;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            color: #d32f2f;
+            text-align: center;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 20px rgba(211, 47, 47, 0.6);
+        }
+
+        /* Quotes */
+        .quote-card {
+            background: rgba(211, 47, 47, 0.15);
+            border: 2px solid #d32f2f;
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 1rem auto;
+            max-width: 600px;
+            transition: all 0.3s;
+        }
+
+        .quote-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 35px rgba(211, 47, 47, 0.3);
+        }
+
+        .quote-text {
+            font-size: 1.2rem;
+            font-style: italic;
+            margin-bottom: 1rem;
+        }
+
+        .quote-author {
+            color: #d32f2f;
+            font-weight: bold;
+            text-align: right;
+        }
+
+        /* Trivia List */
+        .trivia-list {
+            list-style: none;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .trivia-list li {
+            background: rgba(211, 47, 47, 0.1);
+            border-left: 4px solid #d32f2f;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .trivia-list li:hover {
+            background: rgba(211, 47, 47, 0.2);
+            transform: translateX(10px);
+        }
+
+        .trivia-list li:before {
+            content: "▶ ";
+            color: #d32f2f;
+            margin-right: 0.5rem;
+        }
+
+        /* Footer */
+        footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            border-top: 2px solid #d32f2f;
+            padding: 1rem;
+            text-align: center;
+            color: #aaa;
+            font-size: 0.85rem;
+            z-index: 999;
+        }
+
+        .scroll-hint {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #d32f2f;
+            animation: bounce 2s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(10px); }
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                gap: 0.5rem;
+            }
+
+            nav a {
+                font-size: 0.7rem;
+            }
+
+            .hero-text h1 {
+                font-size: 2.5rem;
+            }
+
+            h2 {
+                font-size: 1.8rem;
+            }
+
+            .cards-3d {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <!-- Navigation -->
+    <nav>
+        <a onclick="showSection('home')">🏠 HOME</a>
+        <a onclick="showSection('characters')">👥 CHARACTERS</a>
+        <a onclick="showSection('episodes')">🎬 EPISODES</a>
+        <a onclick="showSection('quotes')">💬 QUOTES</a>
+        <a onclick="showSection('trivia')">🎯 TRIVIA</a>
+    </nav>
+
+    <!-- Content -->
+    <div class="content">
+        <!-- Home Section -->
+        <div id="home" class="section active">
+            <div class="section-content">
+                <div class="hero-text">
+                    <h1>💰 MONEY HEIST 💰</h1>
+                    <p>La Casa de Papel</p>
+                    <p style="font-size: 1.2rem; color: #d32f2f; margin-top: 1.5rem;">THE PROFESSOR ALWAYS HAS A PLAN...</p>
+                    <p style="margin-top: 2rem; color: #aaa;">Experience the ultimate heist masterpiece</p>
+                    <p style="margin-top: 1rem; color: #d32f2f;">5 Seasons | 50 Episodes | Pure Entertainment</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Characters Section -->
+        <div id="characters" class="section">
+            <div class="section-content">
+                <h2>👥 MAIN CHARACTERS</h2>
+                <div class="cards-3d">
+                    <div class="card-3d">
+                        <h3>The Professor</h3>
+                        <div class="actor">Álvaro Morte</div>
+                        <p>The brilliant mastermind who plans every detail. Calm, strategic, and always thinking 10 steps ahead.</p>
+                    </div>
+                    <div class="card-3d">
+                        <h3>Raquel Murillo</h3>
+                        <div class="actor">Itziar Ituño</div>
+                        <p>A dedicated police inspector hunting The Professor. Complex, intelligent, and gradually getting closer to the truth.</p>
+                    </div>
+                    <div class="card-3d">
+                        <h3>Rio</h3>
+                        <div class="actor">Miguel Herrán</div>
+                        <p>Skilled hacker and explosives expert. Young, brilliant, and deeply in love with Tokyo.</p>
+                    </div>
+                    <div class="card-3d">
+                        <h3>Tokyo</h3>
+                        <div class="actor">Úrsula Corberó</div>
+                        <p>Hot-headed and impulsive. Master of disguise and thief with a tragic past.</p>
+                    </div>
+                    <div class="card-3d">
+                        <h3>Berlin</h3>
+                        <div class="actor">Pedro Alonso</div>
+                        <p>Charming and ruthless coordinator. Artistic yet dangerous, willing to go to any lengths.</p>
+                    </div>
+                    <div class="card-3d">
+                        <h3>Lisbon</h3>
+                        <div class="actor">Itziar Ituño</div>
+                        <p>Former police officer turned gang member. Tough, loyal, and strategic partner.</p>
+                    </div>
+                    <div class="card-3d">
+                        <h3>Denver</h3>
+                        <div class="actor">Jaime Lorente</div>
+                        <p>The wild card member. Young, romantic, and unpredictably dangerous.</p>
+                    </div>
+                    <div class="card-3d">
+                        <h3>Nairobi</h3>
+                        <div class="actor">Alba Flores</div>
+                        <p>The mother of the group. Strong, protective, and intelligent forger and technician.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Episodes Section -->
+        <div id="episodes" class="section">
+            <div class="section-content">
+                <h2>🎬 SEASONS & EPISODES</h2>
+                <div class="cards-3d">
+                    <div class="card-3d">
+                        <h3>Season 1</h3>
+                        <div class="actor">13 Episodes</div>
+                        <p>The Professor executes the first heist on the Royal Mint of Spain with his carefully selected team.</p>
+                    </div>
+                    <div class="card-3d">
+                        <h3>Season 2</h3>
+                        <div class="actor">9 Episodes</div>
+                        <p>The gang prepares for their biggest heist yet on the Bank of Spain while dealing with new threats.</p>
+                    </div>
+                    <div class="card-3d">
+                        <h3>Season 3</h3>
+                        <div class="actor">8 Episodes</div>
+                        <p>The heist on the Bank of Spain begins in earnest with everything on the line.</p>
+                    </div>
+                    <div class="card-3d">
+                        <h3>Season 4</h3>
+                        <div class="actor">8 Episodes</div>
+                        <p>The tension escalates as the gang faces unprecedented challenges and betrayals.</p>
+                    </div>
+                    <div class="card-3d">
+                        <h3>Season 5</h3>
+                        <div class="actor">10 Episodes</div>
+                        <p>The final season brings all storylines together for an epic and unforgettable conclusion.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quotes Section -->
+        <div id="quotes" class="section">
+            <div class="section-content">
+                <h2>💬 ICONIC QUOTES</h2>
+                <div class="quote-card">
+                    <div class="quote-text">"The Professor always has a plan."</div>
+                    <div class="quote-author">- The Professor</div>
+                </div>
+                <div class="quote-card">
+                    <div class="quote-text">"I wasn't born. I was created. And I was born to love you."</div>
+                    <div class="quote-author">- Rio</div>
+                </div>
+                <div class="quote-card">
+                    <div class="quote-text">"You can't negotiate with the dead."</div>
+                    <div class="quote-author">- Raquel Murillo</div>
+                </div>
+                <div class="quote-card">
+                    <div class="quote-text">"Art is my hobby. Crime is my occupation."</div>
+                    <div class="quote-author">- Berlin</div>
+                </div>
+                <div class="quote-card">
+                    <div class="quote-text">"Believe in the plan. The plan never fails."</div>
+                    <div class="quote-author">- The Professor</div>
+                </div>
+                <div class="quote-card">
+                    <div class="quote-text">"We're not criminals, we're artists."</div>
+                    <div class="quote-author">- The Gang</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trivia Section -->
+        <div id="trivia" class="section">
+            <div class="section-content">
+                <h2>🎯 FUN FACTS & TRIVIA</h2>
+                <ul class="trivia-list">
+                    <li>Money Heist is originally a Spanish show titled "La Casa de Papel" (The House of Paper).</li>
+                    <li>The series was produced by Álex de la Iglesia and Esther Martínez Sobral.</li>
+                    <li>The red jumpsuits and Dalí masks became iconic symbols of the series worldwide.</li>
+                    <li>The show was initially aired on Spanish television before becoming a Netflix global phenomenon.</li>
+                    <li>Character names are taken from Spanish cities: Tokyo, Rio, Berlin, Nairobi, Denver, and Lisbon.</li>
+                    <li>The series was one of Netflix's most-watched non-English language shows.</li>
+                    <li>The theme music is a remixed version of "Bella Ciao," an Italian folk protest song.</li>
+                    <li>The Professor's real name is Sergio Marquina, revealed in the series.</li>
+                    <li>Multiple heists are planned throughout the 5 seasons, each more complex than the last.</li>
+                    <li>The show has won numerous awards including Spanish Academy Awards and international recognition.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>💰 Money Heist - 3D Fan Experience 💰 | All rights reserved to Netflix & creators | © 2024 Fan Site</p>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Three.js Setup
+        const canvas = document.getElementById('canvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x000000, 1);
+        camera.position.z = 5;
+
+        // Add lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const pointLight = new THREE.PointLight(0xd32f2f, 1, 100);
+        pointLight.position.set(10, 10, 10);
+        scene.add(pointLight);
+
+        // Create rotating particles
+        const geometry = new THREE.BufferGeometry();
+        const count = 200;
+        const positions = new Float32Array(count * 3);
+
+        for (let i = 0; i < count * 3; i++) {
+            positions[i] = (Math.random() - 0.5) * 20;
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+        const material = new THREE.PointsMaterial({
+            color: 0xd32f2f,
+            size: 0.1,
+            sizeAttenuation: true,
+            transparent: true,
+            opacity: 0.6
+        });
+
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+
+        // Create cubes
+        const cubes = [];
+        const cubeCount = 5;
+
+        for (let i = 0; i < cubeCount; i++) {
+            const size = Math.random() * 2 + 1;
+            const cubeGeo = new THREE.BoxGeometry(size, size, size);
+            const cubeMat = new THREE.MeshPhongMaterial({
+                color: 0xd32f2f,
+                wireframe: true,
+                emissive: 0x660000,
+                wireframeLinewidth: 2
+            });
+            const cube = new THREE.Mesh(cubeGeo, cubeMat);
+            cube.position.x = (Math.random() - 0.5) * 15;
+            cube.position.y = (Math.random() - 0.5) * 15;
+            cube.position.z = (Math.random() - 0.5) * 15;
+            cube.rotation.x = Math.random() * Math.PI;
+            cube.rotation.y = Math.random() * Math.PI;
+            cube.speedX = (Math.random() - 0.5) * 0.02;
+            cube.speedY = (Math.random() - 0.5) * 0.02;
+            cube.speedZ = (Math.random() - 0.5) * 0.02;
+            scene.add(cube);
+            cubes.push(cube);
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Rotate particles
+            particles.rotation.x += 0.0001;
+            particles.rotation.y += 0.0002;
+
+            // Animate cubes
+            cubes.forEach(cube => {
+                cube.rotation.x += cube.speedX;
+                cube.rotation.y += cube.speedY;
+                cube.rotation.z += cube.speedZ;
+                cube.position.x += (Math.random() - 0.5) * 0.05;
+                cube.position.y += (Math.random() - 0.5) * 0.05;
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Section switching
+        function showSection(sectionId) {
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => section.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+        }
+    </script>
+</body>
+</html>
